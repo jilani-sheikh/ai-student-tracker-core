@@ -6,13 +6,24 @@ import { databases, TABLES, DATABASE_ID } from '../lib/appwrite';
 import { ID } from 'appwrite';
 import { toast } from 'sonner';
 
-export default function AIChat({ userId, paceScore }) {
+export default function AIChat({ userId, paceScore, educationLevel, subject, fullName }) {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isListening, setIsListening] = useState(false);
-    const [isSpeaking, setIsSpeaking] = useState(true); // Default ON for mission requirements
+    const [isSpeaking, setIsSpeaking] = useState(true); 
     const [loading, setLoading] = useState(false);
     const scrollRef = useRef(null);
+    const [aiConnectionStatus, setAiConnectionStatus] = useState('connected');
+
+    // Initial greeting based on context
+    useEffect(() => {
+        if (messages.length === 0) {
+            const greeting = subject 
+                ? `Hello! I'm your PulseAI tutor. Let's dive into ${subject}. Ready to explore?`
+                : "Welcome to the Learning Lab! What subject should we explore today?";
+            setMessages([{ role: 'assistant', message: greeting, timestamp: new Date().toISOString() }]);
+        }
+    }, [subject]);
     
     const recognition = useRef(null);
     const synth = window.speechSynthesis;
@@ -76,6 +87,7 @@ export default function AIChat({ userId, paceScore }) {
         setLoading(true);
 
         try {
+            setAiConnectionStatus('connected');
             // Save user message
             await databases.createDocument(DATABASE_ID, TABLES.CHAT_HISTORY, ID.unique(), {
                 userId,
@@ -84,9 +96,10 @@ export default function AIChat({ userId, paceScore }) {
                 timestamp: new Date().toISOString()
             });
 
-            const model = getGeminiModel(paceScore);
+            const model = getGeminiModel(paceScore, educationLevel, subject, fullName);
             const result = await model.generateContent(currentInput);
             const responseText = result.response.text();
+            console.log("AI Response received:", responseText);
 
             const assistantMsg = { role: 'assistant', message: responseText, timestamp: new Date().toISOString() };
             setMessages(prev => [...prev, assistantMsg]);
@@ -104,7 +117,20 @@ export default function AIChat({ userId, paceScore }) {
 
         } catch (error) {
             console.error('Chat error:', error);
-            toast.error("AI connection lost. Check your API key.");
+            
+            // Robust Error Handling for 404 and 429
+            const errorMessage = error.message || '';
+            const status = error.status || 0;
+            
+            if (status === 429 || errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('capacity')) {
+                toast.error("PulseAI is cooling down! Please wait 30 seconds before asking another question.");
+            } else if (status === 404 || errorMessage.includes('404') || errorMessage.includes('not found')) {
+                toast.error("AI Model not recognized. Checking connection...");
+                setAiConnectionStatus('error');
+            } else {
+                toast.error("AI connection lost. Try again.");
+            }
+            
             setMessages(prev => prev.filter(m => m !== userMsg)); // Remove failed message
         } finally {
             setLoading(false);
@@ -112,15 +138,23 @@ export default function AIChat({ userId, paceScore }) {
     };
 
     return (
-        <div className="glass-card flex flex-col h-[600px] relative overflow-hidden">
+        <div className="glass-card flex flex-col h-[650px] relative overflow-hidden">
             <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-4">
                 <div className="flex items-center gap-2">
-                    <Bot className="text-purple-400" />
+                    <div className="w-12 h-12 bg-purple-600/20 rounded-xl flex items-center justify-center">
+                         <Bot className="text-purple-400" size={28} />
+                    </div>
                     <div>
-                        <h2 className="text-xl font-bold">PulseAI Tutor</h2>
-                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">
-                            Tone: {paceScore < 0.8 ? 'Analogy Mode' : paceScore > 1.2 ? 'Deep Dive' : 'Standard'}
-                        </p>
+                        <h2 className="text-xl font-black tracking-tight">{subject || 'PulseAI Tutor'}</h2>
+                        <div className="flex items-center gap-2">
+                            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">
+                                {educationLevel?.replace('_', ' ') || 'GENERAL'}
+                            </p>
+                            <span className="w-1 h-1 bg-gray-700 rounded-full" />
+                            <p className="text-[10px] text-purple-400 uppercase tracking-widest font-black">
+                                {paceScore < 0.8 ? 'Analogy Mode' : paceScore > 1.2 ? 'Deep Dive' : 'Standard'}
+                            </p>
+                        </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">

@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import AIChat from './components/AIChat';
 import Quiz from './components/Quiz';
 import Auth from './components/Auth';
+import Onboarding from './components/Onboarding';
 import { authService } from './lib/appwrite';
 import { Sparkles, LayoutDashboard, MessageSquare, GraduationCap, LogOut, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,8 +14,11 @@ export default function App() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isQuizActive, setIsQuizActive] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState(null);
   const [xpToasts, setXpToasts] = useState([]);
-  const { stats, loading, updatePace, addXP } = useAdaptivePace(user?.$id);
+  const { stats, loading, updatePace, addXP, updateProfile } = useAdaptivePace(user?.$id);
+
+  const showOnboarding = user && !loading && !stats.education_level;
 
   useEffect(() => {
     const checkSession = async () => {
@@ -139,11 +143,19 @@ export default function App() {
                   <Dashboard 
                     stats={stats} 
                     progress={progressData} 
-                    onStartQuiz={() => setIsQuizActive(true)} 
+                    onStartQuiz={(subject) => {
+                      setSelectedSubject(subject);
+                      setActiveTab('chat');
+                    }} 
                   />
                 )}
                 {activeTab === 'chat' && (
-                  <AIChat userId={user.$id} paceScore={stats.pace_score} />
+                  <AIChat 
+                    userId={user.$id} 
+                    paceScore={stats.pace_score} 
+                    educationLevel={stats.education_level}
+                    subject={selectedSubject}
+                  />
                 )}
                 {activeTab === 'progress' && (
                   <div className="glass-card py-20 text-center rounded-[2rem]">
@@ -173,6 +185,16 @@ export default function App() {
             </div>
           </motion.div>
         ))}
+      </AnimatePresence>
+      {/* Onboarding Overlay */}
+      <AnimatePresence>
+        {showOnboarding && (
+          <Onboarding 
+            onComplete={async (data) => {
+              await updateProfile(data);
+            }} 
+          />
+        )}
       </AnimatePresence>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { databases, TABLES, DATABASE_ID } from '../lib/appwrite';
-import { Query } from 'appwrite';
+import { Query, ID } from 'appwrite';
 import { toast } from 'sonner';
 
 export const useAdaptivePace = (userId) => {
@@ -8,7 +8,9 @@ export const useAdaptivePace = (userId) => {
         xp: 0,
         level: 1,
         pace_score: 1.0,
-        badges: []
+        badges: [],
+        full_name: '',
+        education_level: ''
     });
     const [loading, setLoading] = useState(true);
 
@@ -31,6 +33,8 @@ export const useAdaptivePace = (userId) => {
                     level: doc.level,
                     pace_score: doc.pace_score,
                     badges: JSON.parse(doc.badges || '[]'),
+                    full_name: doc.full_name || '',
+                    education_level: doc.education_level || '',
                     $id: doc.$id // Store the Appwrite document ID
                 });
             }
@@ -105,11 +109,48 @@ export const useAdaptivePace = (userId) => {
         }
     };
 
+    const updateProfile = async (data) => {
+        try {
+            let currentId = stats.$id;
+            if (currentId) {
+                await databases.updateDocument(
+                    DATABASE_ID,
+                    TABLES.USER_STATS,
+                    currentId,
+                    data
+                );
+            } else {
+                // Fallback: Create document if it doesn't exist
+                const newDoc = await databases.createDocument(
+                    DATABASE_ID,
+                    TABLES.USER_STATS,
+                    ID.unique(),
+                    {
+                        userId,
+                        xp: 0,
+                        level: 1,
+                        pace_score: 1.0,
+                        ...data
+                    }
+                );
+                currentId = newDoc.$id;
+            }
+            setStats(prev => ({ ...prev, ...data, $id: currentId }));
+            toast.success('Profile updated!');
+            return true;
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            toast.error(`Failed to save profile: ${error.message}`);
+            return false;
+        }
+    };
+
     return {
         stats,
         loading,
         updatePace,
         addXP,
+        updateProfile,
         refresh: fetchStats
     };
 };

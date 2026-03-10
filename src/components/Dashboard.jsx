@@ -1,6 +1,21 @@
 import { motion } from 'framer-motion';
-import { Trophy, Target, Zap, Book, Leaf, BarChart3, Bell, Award, TrendingUp } from 'lucide-react';
+import { Trophy, Target, Zap, Book, Leaf, BarChart3, Bell, Award, TrendingUp, ChevronRight } from 'lucide-react';
 import Leaderboard from './Leaderboard';
+
+const SUBJECTS = {
+    college: [
+        { name: 'Java', icon: '☕', desc: 'Enterprise Grade Apps' },
+        { name: 'Python', icon: '🐍', desc: 'Data Science & AI' },
+        { name: 'C++', icon: '⚙️', desc: 'System Performance' },
+        { name: 'Frontend Dev', icon: '🎨', desc: 'Modern Web Design' }
+    ],
+    higher_grade: [
+        { name: 'Physics', icon: '⚛️', desc: 'Laws of Nature' },
+        { name: 'Chemistry', icon: '🧪', desc: 'Matter & Reactions' },
+        { name: 'Math', icon: '📐', desc: 'Logic & Calculus' },
+        { name: 'Biology', icon: '🧬', desc: 'Life Sciences' }
+    ]
+};
 
 export default function Dashboard({ stats, progress, onStartQuiz }) {
     const paceConfig = {
@@ -11,25 +26,31 @@ export default function Dashboard({ stats, progress, onStartQuiz }) {
 
     const currentPace = stats.pace_score < 0.8 ? '🌿' : stats.pace_score > 1.2 ? '⚡' : '📖';
     const config = paceConfig[currentPace];
+    const currentSubjects = SUBJECTS[stats.education_level] || SUBJECTS.college;
 
     return (
-        <div className="space-y-6">
-            <header className="flex justify-between items-end mb-8">
+        <div className="space-y-10">
+            {/* Header */}
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                        Welcome back, Learner.
+                    <h1 className="text-5xl font-black tracking-tight mb-2">
+                        Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">{stats.full_name || 'Learner'}</span>
                     </h1>
-                    <p className="text-gray-400 mt-2">Your AI tutor is ready for the next session.</p>
+                    <p className="text-gray-500 font-medium">Your learning pulse is healthy. You've earned {stats.xp} XP total!</p>
                 </div>
                 <div className="flex gap-4">
-                    <button className="glass p-3 rounded-xl hover:bg-white/10 transition-colors">
-                        <Bell size={20} />
+                    <button className="glass p-4 rounded-2xl hover:bg-white/5 transition-all relative">
+                        <Bell size={24} className="text-gray-400" />
+                        <span className="absolute top-4 right-4 w-2 h-2 bg-red-500 rounded-full border-2 border-[#050505]" />
                     </button>
-                    <div className="glass px-4 py-2 rounded-xl flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold">
-                            {stats.level}
+                    <div className="glass flex items-center gap-4 px-6 py-4 rounded-2xl">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 to-blue-500 flex items-center justify-center font-bold shadow-lg shadow-purple-500/20">
+                            {stats.full_name ? stats.full_name[0] : stats.level}
                         </div>
-                        <span className="font-bold">Lvl {stats.level}</span>
+                        <div className="hidden sm:block text-left">
+                            <p className="text-sm font-bold leading-none mb-1">{stats.full_name || `Lvl ${stats.level} Learner`}</p>
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-black">{stats.education_level?.replace('_', ' ') || 'PRO STUDENT'}</p>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -55,11 +76,11 @@ export default function Dashboard({ stats, progress, onStartQuiz }) {
                 <motion.div whileHover={{ scale: 1.02 }} className="glass-card flex flex-col justify-between">
                     <div className="flex justify-between items-start">
                         <Trophy className="text-yellow-500" />
-                        <span className="text-xs font-bold text-gray-500">XP Progress</span>
+                        <span className="text-xs font-bold text-gray-500">XP Total</span>
                     </div>
-                    <div className="mt-4">
+                    <div className="mt-4 text-left">
                         <h3 className="text-3xl font-black">{stats.xp}</h3>
-                        <p className="text-sm text-gray-400">Total Experience Points</p>
+                        <p className="text-sm text-gray-400">Experience Points</p>
                     </div>
                 </motion.div>
 
@@ -78,48 +99,43 @@ export default function Dashboard({ stats, progress, onStartQuiz }) {
                     </div>
                 </motion.div>
 
-                {/* Progress Overview */}
-                <motion.div whileHover={{ scale: 1.02 }} className="glass-card md:col-span-1">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-bold flex items-center gap-2">
-                            <Target size={18} className="text-purple-400" />
-                            Curriculum
-                        </h3>
-                    </div>
-                    <div className="space-y-4">
-                        {progress.map((topic) => (
-                            <div key={topic.topic_id} className="space-y-2">
-                                <div className="flex justify-between text-xs">
-                                    <span className="text-gray-400">{topic.topic_name}</span>
-                                    <span className="text-purple-400 font-mono">{topic.avg_score}%</span>
-                                </div>
-                                <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                                    <motion.div 
-                                        initial={{ width: 0 }}
-                                        whileInView={{ width: `${topic.avg_score}%` }}
-                                        className="h-full bg-purple-500"
-                                    />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </motion.div>
-
                 <Leaderboard />
-
-                {/* Quick Action */}
-                <motion.div 
-                    whileHover={{ scale: 1.02 }}
-                    className="glass-card bg-purple-600 hover:bg-purple-500 cursor-pointer group flex flex-col justify-between"
-                    onClick={onStartQuiz}
-                >
-                    <Zap className="group-hover:fill-current transition-all text-white" />
-                    <div>
-                        <h3 className="text-xl font-bold text-white">Start Challenge</h3>
-                        <p className="text-purple-200 text-sm">Boost your pace score now</p>
-                    </div>
-                </motion.div>
             </div>
+
+            {/* Curriculum Grid */}
+            <section>
+                <div className="flex items-center justify-between mb-8">
+                    <h2 className="text-3xl font-black flex items-center gap-3 tracking-tight">
+                        <Book className="text-purple-500" />
+                        Learning Curriculum
+                    </h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {currentSubjects.map((subject, idx) => (
+                        <motion.div 
+                            key={subject.name}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.1 }}
+                            className="glass-card hover:border-purple-500/30 transition-all p-8 relative group overflow-hidden cursor-pointer"
+                        >
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl translate-x-4 -translate-y-4">
+                                {subject.icon}
+                            </div>
+                            <div className="text-4xl mb-6">{subject.icon}</div>
+                            <h3 className="text-2xl font-black mb-2">{subject.name}</h3>
+                            <p className="text-sm text-gray-500 mb-8 font-medium">{subject.desc}</p>
+                            <button 
+                                onClick={() => onStartQuiz(subject.name)}
+                                className="w-full bg-white/5 hover:bg-purple-600 py-4 rounded-2xl text-sm font-black transition-all flex items-center justify-center gap-2 group-hover:text-white"
+                            >
+                                Start Module
+                                <ChevronRight size={18} />
+                            </button>
+                        </motion.div>
+                    ))}
+                </div>
+            </section>
         </div>
     );
 }

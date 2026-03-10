@@ -22,6 +22,10 @@ export default function Leaderboard() {
                 setLeaders(response.documents);
             } catch (error) {
                 console.error('Error fetching leaderboard:', error);
+                if (error.code === 401) {
+                    setLeaders([]); // Clear if unauthorized
+                    // Optional: set a specific 'login required' state if you want to show a message
+                }
             } finally {
                 setLoading(false);
             }

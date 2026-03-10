@@ -1,4 +1,4 @@
-import { Client, Databases, Account } from 'appwrite';
+import { Client, Databases, Account, ID } from 'appwrite';
 
 const client = new Client();
 
@@ -17,13 +17,15 @@ export const account = new Account(client);
 export const authService = {
     async signup(email, password, name) {
         try {
+            // 1. Create Account
             const user = await account.create(ID.unique(), email, password, name);
-            // Auto login after signup
+            
+            // 2. Immediate Login (Required to have session for DB write)
             await this.login(email, password);
             
-            // Create initial user stats
+            // 3. Create initial user stats
             await databases.createDocument(
-                import.meta.env.VITE_APPWRITE_DATABASE_ID,
+                DATABASE_ID,
                 import.meta.env.VITE_APPWRITE_STATS_COLLECTION_ID,
                 ID.unique(),
                 {
@@ -36,6 +38,7 @@ export const authService = {
             );
             return user;
         } catch (error) {
+            console.error('Signup error:', error);
             throw error;
         }
     },
