@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Mic, MicOff, Volume2, VolumeX, Bot } from 'lucide-react';
+import { Send, Mic, MicOff, Volume2, VolumeX, Bot, User, Lock, Mail } from 'lucide-react';
 import { getGeminiModel } from '../lib/gemini';
 import { databases, TABLES, DATABASE_ID } from '../lib/appwrite';
 import { ID } from 'appwrite';

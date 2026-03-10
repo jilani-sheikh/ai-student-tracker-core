@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Trophy, Target, Zap, Book, Leaf, BarChart3, Bell, Award } from 'lucide-react';
+import { Trophy, Target, Zap, Book, Leaf, BarChart3, Bell, Award, TrendingUp } from 'lucide-react';
 import Leaderboard from './Leaderboard';
 
 export default function Dashboard({ stats, progress, onStartQuiz }) {

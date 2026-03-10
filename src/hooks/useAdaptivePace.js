@@ -13,7 +13,10 @@ export const useAdaptivePace = (userId) => {
     const [loading, setLoading] = useState(true);
 
     const fetchStats = async () => {
-        if (!userId) return;
+        if (!userId) {
+            setLoading(false);
+            return;
+        }
         try {
             const response = await databases.listDocuments(
                 DATABASE_ID,
@@ -28,12 +31,12 @@ export const useAdaptivePace = (userId) => {
                     level: doc.level,
                     pace_score: doc.pace_score,
                     badges: JSON.parse(doc.badges || '[]'),
-                    $id: doc.$id
+                    $id: doc.$id // Store the Appwrite document ID
                 });
             }
         } catch (error) {
             console.error('Error fetching user stats:', error);
-            toast.error('Failed to connect to Pulse servers.');
+            // toast.error('Failed to connect to Pulse servers.');
         } finally {
             setLoading(false);
         }
@@ -44,6 +47,8 @@ export const useAdaptivePace = (userId) => {
     }, [userId]);
 
     const updatePace = async (quizScore) => {
+        if (!stats.$id) return;
+
         let paceAdjustment = 0;
         if (quizScore > 80) paceAdjustment = 0.1;
         else if (quizScore < 50) paceAdjustment = -0.1;
@@ -53,8 +58,6 @@ export const useAdaptivePace = (userId) => {
         const newPace = Math.round(Math.max(0.1, Math.min(2.0, stats.pace_score + paceAdjustment)) * 10) / 10;
         
         try {
-            if (!stats.$id) await fetchStats(); // Ensure we have the latest ID
-            
             await databases.updateDocument(
                 DATABASE_ID,
                 TABLES.USER_STATS,
@@ -70,6 +73,8 @@ export const useAdaptivePace = (userId) => {
     };
 
     const addXP = async (amount) => {
+        if (!stats.$id) return false;
+
         const newXP = stats.xp + amount;
         const newLevel = Math.floor(newXP / 1000) + 1;
         
@@ -80,8 +85,6 @@ export const useAdaptivePace = (userId) => {
         if (newXP >= 1000 && !newBadges.includes('Master')) newBadges.push('Master');
 
         try {
-            if (!stats.$id) await fetchStats();
-
             await databases.updateDocument(
                 DATABASE_ID,
                 TABLES.USER_STATS,
