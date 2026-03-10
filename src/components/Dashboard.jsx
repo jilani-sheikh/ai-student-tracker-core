@@ -107,33 +107,60 @@ export default function Dashboard({ stats, progress, onStartQuiz }) {
                 <div className="flex items-center justify-between mb-8">
                     <h2 className="text-3xl font-black flex items-center gap-3 tracking-tight">
                         <Book className="text-purple-500" />
-                        Learning Curriculum
+                        Learning Modules
                     </h2>
+                    <span className="text-sm text-gray-500 font-medium">
+                        {Math.min(stats.level - 1, currentSubjects.length)}/{currentSubjects.length} modules completed
+                    </span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {currentSubjects.map((subject, idx) => (
-                        <motion.div 
-                            key={subject.name}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.1 }}
-                            className="glass-card hover:border-purple-500/30 transition-all p-8 relative group overflow-hidden cursor-pointer"
-                        >
-                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl translate-x-4 -translate-y-4">
-                                {subject.icon}
-                            </div>
-                            <div className="text-4xl mb-6">{subject.icon}</div>
-                            <h3 className="text-2xl font-black mb-2">{subject.name}</h3>
-                            <p className="text-sm text-gray-500 mb-8 font-medium">{subject.desc}</p>
-                            <button 
-                                onClick={() => onStartQuiz(subject.name)}
-                                className="w-full bg-white/5 hover:bg-purple-600 py-4 rounded-2xl text-sm font-black transition-all flex items-center justify-center gap-2 group-hover:text-white"
+                    {currentSubjects.map((subject, idx) => {
+                        // Estimate topics studied based on level and index
+                        const totalTopics = 5;
+                        const topicsStudied = Math.min(totalTopics, Math.max(0, stats.level - idx));
+                        const pct = Math.round((topicsStudied / totalTopics) * 100);
+                        const isComplete = topicsStudied >= totalTopics;
+
+                        return (
+                            <motion.div 
+                                key={subject.name}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.1 }}
+                                className="glass-card hover:border-purple-500/30 transition-all p-8 relative group overflow-hidden cursor-pointer flex flex-col"
                             >
-                                Start Module
-                                <ChevronRight size={18} />
-                            </button>
-                        </motion.div>
-                    ))}
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl translate-x-4 -translate-y-4">
+                                    {subject.icon}
+                                </div>
+                                <div className="text-4xl mb-4">{subject.icon}</div>
+                                <h3 className="text-2xl font-black mb-1">{subject.name}</h3>
+                                <p className="text-sm text-gray-500 mb-4 font-medium">{subject.desc}</p>
+
+                                {/* Topic Progress Bar */}
+                                <div className="mt-auto">
+                                    <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+                                        <span>{topicsStudied}/{totalTopics} topics</span>
+                                        <span className={isComplete ? 'text-green-400 font-bold' : 'text-purple-400'}>{isComplete ? '✓ Completed' : `${pct}%`}</span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mb-4">
+                                        <motion.div 
+                                            className={`h-full rounded-full ${isComplete ? 'bg-green-500' : 'bg-purple-500'}`}
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${pct}%` }}
+                                            transition={{ duration: 0.8, delay: idx * 0.1 }}
+                                        />
+                                    </div>
+                                    <button 
+                                        onClick={() => onStartQuiz(subject.name)}
+                                        className="w-full bg-white/5 hover:bg-purple-600 py-3 rounded-2xl text-sm font-black transition-all flex items-center justify-center gap-2 group-hover:text-white"
+                                    >
+                                        {isComplete ? 'Review Module' : 'Continue Learning'}
+                                        <ChevronRight size={18} />
+                                    </button>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
                 </div>
             </section>
         </div>

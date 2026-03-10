@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, XCircle, ChevronRight, Award } from 'lucide-react';
+import { CheckCircle2, XCircle, ChevronRight, Award, Zap, Leaf, BookOpen } from 'lucide-react';
 
 export default function Quiz({ quizData, onComplete }) {
     const [currentStep, setCurrentStep] = useState(0);
     const [selectedOption, setSelectedOption] = useState(null);
     const [score, setScore] = useState(0);
     const [isFinished, setIsFinished] = useState(false);
+    const [finalScore, setFinalScore] = useState(0);
 
     // Support both the AI-Generated format and the legacy sample format
     const questions = quizData?.quiz_data?.map(q => ({
@@ -31,27 +32,48 @@ export default function Quiz({ quizData, onComplete }) {
             setCurrentStep(prev => prev + 1);
             setSelectedOption(null);
         } else {
+            const lastCorrect = selectedOption === currentQuestion.correctIndex ? 1 : 0;
+            const fs = Math.round(((score + lastCorrect) / questions.length) * 100);
+            setFinalScore(fs);
             setIsFinished(true);
-            const finalScore = ((score + (selectedOption === currentQuestion.correctIndex ? 1 : 0)) / questions.length) * 100;
-            onComplete(finalScore);
+            onComplete(fs);
         }
     };
 
     if (isFinished) {
+        const isFastLearner = finalScore > 80;
+        const isSteadyLearner = finalScore < 60;
+        const isPerfect = finalScore === 100;
+
+        const paceLabel = isPerfect
+            ? { icon: <Award className="text-yellow-400" size={28} />, label: 'Perfect Scholar', desc: '100% correct! You have mastered this topic!', color: 'text-yellow-400', bg: 'bg-yellow-400/10 border-yellow-400/30' }
+            : isFastLearner
+            ? { icon: <Zap className="text-green-400" size={28} />, label: 'Fast Learner ⚡', desc: 'Excellent work! You can tackle advanced topics next.', color: 'text-green-400', bg: 'bg-green-400/10 border-green-400/30' }
+            : isSteadyLearner
+            ? { icon: <Leaf className="text-blue-400" size={28} />, label: 'Steady Learner 🌿', desc: 'Good effort! Revisiting the fundamentals will help you grow.', color: 'text-blue-400', bg: 'bg-blue-400/10 border-blue-400/30' }
+            : { icon: <BookOpen className="text-purple-400" size={28} />, label: 'Balanced Learner 📖', desc: `You scored ${finalScore}%. Keep up the consistent pace!`, color: 'text-purple-400', bg: 'bg-purple-400/10 border-purple-400/30' };
+        
         return (
             <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="glass-card text-center py-12"
+                className="glass-card text-center py-12 max-w-xl mx-auto"
             >
                 <Award className="w-16 h-16 text-yellow-500 mx-auto mb-4 animate-bounce" />
-                <h2 className="text-3xl font-bold mb-2">Quiz Completed!</h2>
-                <p className="text-4xl font-black text-purple-400 mb-6">{Math.round((score / questions.length) * 100)}%</p>
-                <p className="text-gray-400 mb-8 font-medium">Your progress and pace score have been saved.</p>
+                <h2 className="text-3xl font-bold mb-2">Assessment Complete!</h2>
+                <p className="text-5xl font-black text-purple-400 mb-6">{finalScore}%</p>
+
+                {/* Learner Type Badge */}
+                <div className={`inline-flex items-center gap-3 px-6 py-3 rounded-2xl border mb-6 ${paceLabel.bg}`}>
+                    {paceLabel.icon}
+                    <div className="text-left">
+                        <p className={`font-black text-lg ${paceLabel.color}`}>{paceLabel.label}</p>
+                        <p className="text-xs text-gray-400">{paceLabel.desc}</p>
+                    </div>
+                </div>
+                <p className="text-gray-500 text-sm mb-8">Your pace multiplier and XP have been updated. Check your dashboard!</p>
                 <button 
-                    onClick={() => {
-                        setIsFinished(false);
-                    }}
+                    onClick={() => { setIsFinished(false); }}
                     className="bg-purple-600 hover:bg-purple-500 px-8 py-3 rounded-xl font-bold transition-all active:scale-95"
                 >
                     Back to Dashboard

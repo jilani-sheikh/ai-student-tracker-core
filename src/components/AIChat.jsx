@@ -55,15 +55,22 @@ export default function AIChat({ userId, paceScore, educationLevel, subject, ful
     }, [messages]);
 
     const toggleListening = () => {
+        if (!recognition.current) {
+            toast.error("Voice input is not supported in this browser. Please use Chrome.");
+            return;
+        }
         try {
             if (isListening) {
-                recognition.current?.stop();
+                recognition.current.stop();
+                setIsListening(false);
             } else {
-                recognition.current?.start();
+                recognition.current.start();
                 setIsListening(true);
+                toast.info("🎤 Listening... Speak now!");
             }
         } catch (e) {
-            toast.error("Microphone access failed.");
+            setIsListening(false);
+            toast.error("Microphone access failed. Check permissions.");
         }
     };
 
