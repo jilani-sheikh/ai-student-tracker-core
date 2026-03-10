@@ -6,7 +6,7 @@ import { databases, TABLES, DATABASE_ID } from '../lib/appwrite';
 import { ID } from 'appwrite';
 import { toast } from 'sonner';
 
-export default function AIChat({ userId, paceScore, educationLevel, subject, fullName }) {
+export default function AIChat({ userId, paceScore, educationLevel, subject, fullName, onQuizGenerated }) {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isListening, setIsListening] = useState(false);
@@ -100,6 +100,26 @@ export default function AIChat({ userId, paceScore, educationLevel, subject, ful
             const result = await model.generateContent(currentInput);
             const responseText = result.response.text();
             console.log("AI Response received:", responseText);
+
+            // Try to extract JSON quiz block from the AI string
+            let quizPayload = null;
+            try {
+                const jsonMatch = responseText.match(/```(?:json)?\n?([\s\S]*?)\n?```/) || [null, responseText];
+                const cleanJson = jsonMatch[1].trim().replace(/^[^{]*{/, '{').replace(/}[^}]*$/, '}');
+                const parsed = JSON.parse(cleanJson);
+                if (parsed.quiz_data) {
+                    quizPayload = parsed;
+                }
+            } catch (e) {
+                // Not JSON, continue as normal chat
+            }
+
+            if (quizPayload && onQuizGenerated) {
+                toast.success('Topic completed! Generating Assessment...');
+                onQuizGenerated(quizPayload);
+                setLoading(false);
+                return; // Stop processing, we are moving to the Quiz UI
+            }
 
             const assistantMsg = { role: 'assistant', message: responseText, timestamp: new Date().toISOString() };
             setMessages(prev => [...prev, assistantMsg]);

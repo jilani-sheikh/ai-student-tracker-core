@@ -76,7 +76,7 @@ export const useAdaptivePace = (userId) => {
         }
     };
 
-    const addXP = async (amount) => {
+    const addXP = async (amount, score = 0) => {
         if (!stats.$id) return false;
 
         const newXP = stats.xp + amount;
@@ -87,6 +87,12 @@ export const useAdaptivePace = (userId) => {
         if (newXP >= 100 && !newBadges.includes('Novice')) newBadges.push('Novice');
         if (newXP >= 500 && !newBadges.includes('Expert')) newBadges.push('Expert');
         if (newXP >= 1000 && !newBadges.includes('Master')) newBadges.push('Master');
+        
+        // UNIQUE BUG FIX: Award specific badge for 100% scores
+        if (score === 100 && !newBadges.includes('Perfect Scholar')) {
+            newBadges.push('Perfect Scholar');
+            toast.success("Achievement Unlocked: Perfect Scholar! 🏆");
+        }
 
         try {
             await databases.updateDocument(

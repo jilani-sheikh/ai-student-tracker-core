@@ -8,7 +8,13 @@ export default function Quiz({ quizData, onComplete }) {
     const [score, setScore] = useState(0);
     const [isFinished, setIsFinished] = useState(false);
 
-    const questions = quizData?.questions || [];
+    // Support both the AI-Generated format and the legacy sample format
+    const questions = quizData?.quiz_data?.map(q => ({
+        text: q.question,
+        options: q.options,
+        correctIndex: q.correct
+    })) || quizData?.questions || [];
+    
     const currentQuestion = questions[currentStep];
 
     const handleOptionSelect = (index) => {
@@ -41,9 +47,11 @@ export default function Quiz({ quizData, onComplete }) {
                 <Award className="w-16 h-16 text-yellow-500 mx-auto mb-4 animate-bounce" />
                 <h2 className="text-3xl font-bold mb-2">Quiz Completed!</h2>
                 <p className="text-4xl font-black text-purple-400 mb-6">{Math.round((score / questions.length) * 100)}%</p>
-                <p className="text-gray-400 mb-8">You've earned {score * 10} XP</p>
+                <p className="text-gray-400 mb-8 font-medium">Your progress and pace score have been saved.</p>
                 <button 
-                    onClick={() => window.location.reload()}
+                    onClick={() => {
+                        setIsFinished(false);
+                    }}
                     className="bg-purple-600 hover:bg-purple-500 px-8 py-3 rounded-xl font-bold transition-all active:scale-95"
                 >
                     Back to Dashboard

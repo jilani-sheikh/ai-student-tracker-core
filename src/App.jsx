@@ -38,16 +38,19 @@ export default function App() {
     setActiveTab('dashboard');
   };
 
+  const [generatedQuiz, setGeneratedQuiz] = useState(null);
+
   const handleQuizComplete = async (score) => {
     await updatePace(score);
-    const xpGained = Math.round(score * 2);
-    await addXP(xpGained);
+    const xpGained = Math.round(score * 2) + 10; // BASE 10 XP + Performance Bonus
+    await addXP(xpGained, score);
     
     const id = Date.now();
     setXpToasts(prev => [...prev, { id, amount: xpGained }]);
     setTimeout(() => {
       setXpToasts(prev => prev.filter(t => t.id !== id));
       setIsQuizActive(false);
+      setGeneratedQuiz(null);
       setActiveTab('dashboard');
     }, 3000);
   };
@@ -131,7 +134,7 @@ export default function App() {
         <div className="max-w-6xl mx-auto">
           <AnimatePresence mode="wait">
             {isQuizActive ? (
-              <Quiz key="quiz" quizData={sampleQuiz} onComplete={handleQuizComplete} />
+              <Quiz key="quiz" quizData={generatedQuiz || sampleQuiz} onComplete={handleQuizComplete} />
             ) : (
               <motion.div
                 key={activeTab}
@@ -155,6 +158,11 @@ export default function App() {
                     paceScore={stats.pace_score} 
                     educationLevel={stats.education_level}
                     subject={selectedSubject}
+                    fullName={stats.full_name}
+                    onQuizGenerated={(data) => {
+                      setGeneratedQuiz(data);
+                      setIsQuizActive(true);
+                    }}
                   />
                 )}
                 {activeTab === 'progress' && (
