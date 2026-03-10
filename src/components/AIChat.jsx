@@ -118,18 +118,9 @@ export default function AIChat({ userId, paceScore, educationLevel, subject, ful
         } catch (error) {
             console.error('Chat error:', error);
             
-            // Robust Error Handling for 404 and 429
-            const errorMessage = error.message || '';
-            const status = error.status || 0;
-            
-            if (status === 429 || errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('capacity')) {
-                toast.error("PulseAI is cooling down! Please wait 30 seconds before asking another question.");
-            } else if (status === 404 || errorMessage.includes('404') || errorMessage.includes('not found')) {
-                toast.error("AI Model not recognized. Checking connection...");
-                setAiConnectionStatus('error');
-            } else {
-                toast.error("AI connection lost. Try again.");
-            }
+            // Render a simple offline message
+            toast.error("AI is offline");
+            setAiConnectionStatus('error');
             
             setMessages(prev => prev.filter(m => m !== userMsg)); // Remove failed message
         } finally {

@@ -22,7 +22,7 @@ export default function Onboarding({ onComplete }) {
             const success = await onComplete(data);
             if (success) {
                 // Reactive redirect to break modal UI hold IMMEDIATELY
-                window.location.href = '/'; 
+                window.location.href = '/dashboard'; 
             } else {
                 toast.error("Failed to update profile. Check connection.");
                 setSubmitting(false); // Only unset if failed to allow retry
