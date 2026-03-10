@@ -52,9 +52,9 @@ export default function Leaderboard() {
                         <div className="flex items-center gap-3">
                             <span className="text-gray-500 font-mono w-4">{index + 1}</span>
                             <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-xs">
-                                {user.userId.substring(0, 2).toUpperCase()}
+                                {(user.full_name || 'U').charAt(0).toUpperCase()}
                             </div>
-                            <span className="font-medium text-sm">User {user.userId.substring(0, 5)}</span>
+                            <span className="font-medium text-sm">{user.full_name || `User ${user.userId.substring(0, 5)}`}</span>
                         </div>
                         <div className="flex items-center gap-2">
                              <span className="text-xs text-gray-400">{user.xp} XP</span>
