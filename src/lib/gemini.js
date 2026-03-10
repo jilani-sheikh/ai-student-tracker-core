@@ -14,7 +14,7 @@ export const getGeminiModel = (paceScore = 1.0, educationLevel = 'general', subj
     Be brief and end with a follow-up question.`;
 
     const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash", 
+        model: "gemini-3.1-flash-lite-preview", 
         systemInstruction,
     });
     return model;
