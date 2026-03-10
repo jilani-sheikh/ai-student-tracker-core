@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { databases, TABLES, DATABASE_ID } from '../lib/appwrite';
 import { Query } from 'appwrite';
+import { toast } from 'sonner';
 
 export const useAdaptivePace = (userId) => {
     const [stats, setStats] = useState({
@@ -11,34 +12,34 @@ export const useAdaptivePace = (userId) => {
     });
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    const fetchStats = async () => {
         if (!userId) return;
-
-        const fetchStats = async () => {
-            try {
-                const response = await databases.listDocuments(
-                    DATABASE_ID,
-                    TABLES.USER_STATS,
-                    [Query.equal('userId', userId)]
-                );
-                
-                if (response.documents.length > 0) {
-                    const doc = response.documents[0];
-                    setStats({
-                        xp: doc.xp,
-                        level: doc.level,
-                        pace_score: doc.pace_score,
-                        badges: JSON.parse(doc.badges || '[]'),
-                        $id: doc.$id
-                    });
-                }
-            } catch (error) {
-                console.error('Error fetching user stats:', error);
-            } finally {
-                setLoading(false);
+        try {
+            const response = await databases.listDocuments(
+                DATABASE_ID,
+                TABLES.USER_STATS,
+                [Query.equal('userId', userId)]
+            );
+            
+            if (response.documents.length > 0) {
+                const doc = response.documents[0];
+                setStats({
+                    xp: doc.xp,
+                    level: doc.level,
+                    pace_score: doc.pace_score,
+                    badges: JSON.parse(doc.badges || '[]'),
+                    $id: doc.$id
+                });
             }
-        };
+        } catch (error) {
+            console.error('Error fetching user stats:', error);
+            toast.error('Failed to connect to Pulse servers.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchStats();
     }, [userId]);
 
@@ -49,9 +50,11 @@ export const useAdaptivePace = (userId) => {
 
         if (paceAdjustment === 0) return;
 
-        const newPace = Math.max(0.1, Math.min(2.0, stats.pace_score + paceAdjustment));
+        const newPace = Math.round(Math.max(0.1, Math.min(2.0, stats.pace_score + paceAdjustment)) * 10) / 10;
         
         try {
+            if (!stats.$id) await fetchStats(); // Ensure we have the latest ID
+            
             await databases.updateDocument(
                 DATABASE_ID,
                 TABLES.USER_STATS,
@@ -59,40 +62,44 @@ export const useAdaptivePace = (userId) => {
                 { pace_score: newPace }
             );
             setStats(prev => ({ ...prev, pace_score: newPace }));
+            toast.success(`Pace adjusted: ${newPace}`);
         } catch (error) {
             console.error('Error updating pace:', error);
+            toast.error('Could not sync pace to cloud.');
         }
     };
 
     const addXP = async (amount) => {
         const newXP = stats.xp + amount;
         const newLevel = Math.floor(newXP / 1000) + 1;
+        
+        // Badge logic
+        let newBadges = [...stats.badges];
+        if (newXP >= 100 && !newBadges.includes('Novice')) newBadges.push('Novice');
+        if (newXP >= 500 && !newBadges.includes('Expert')) newBadges.push('Expert');
+        if (newXP >= 1000 && !newBadges.includes('Master')) newBadges.push('Master');
 
         try {
+            if (!stats.$id) await fetchStats();
+
             await databases.updateDocument(
                 DATABASE_ID,
                 TABLES.USER_STATS,
                 stats.$id,
-                { xp: newXP, level: newLevel }
+                { 
+                    xp: newXP, 
+                    level: newLevel,
+                    badges: JSON.stringify(newBadges)
+                }
             );
-            setStats(prev => ({ ...prev, xp: newXP, level: newLevel }));
+            setStats(prev => ({ ...prev, xp: newXP, level: newLevel, badges: newBadges }));
+            toast.info(`Got ${amount} XP!`);
             return true;
         } catch (error) {
             console.error('Error adding XP:', error);
+            toast.error('Progress sync failed.');
             return false;
         }
-    };
-
-    const getPaceIcon = () => {
-        if (stats.pace_score < 0.8) return '🌿';
-        if (stats.pace_score > 1.2) return '⚡';
-        return '📖';
-    };
-
-    const getPaceLabel = () => {
-        if (stats.pace_score < 0.8) return 'Steady';
-        if (stats.pace_score > 1.2) return 'Rapid';
-        return 'Balanced';
     };
 
     return {
@@ -100,7 +107,6 @@ export const useAdaptivePace = (userId) => {
         loading,
         updatePace,
         addXP,
-        getPaceIcon,
-        getPaceLabel
+        refresh: fetchStats
     };
 };

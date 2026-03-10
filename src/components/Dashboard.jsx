@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { Trophy, Target, Zap, Book, Leaf, BarChart3, Clock, Bell } from 'lucide-react';
+import { Trophy, Target, Zap, Book, Leaf, BarChart3, Bell, Award } from 'lucide-react';
+import Leaderboard from './Leaderboard';
 
 export default function Dashboard({ stats, progress, onStartQuiz }) {
     const paceConfig = {
@@ -15,7 +16,9 @@ export default function Dashboard({ stats, progress, onStartQuiz }) {
         <div className="space-y-6">
             <header className="flex justify-between items-end mb-8">
                 <div>
-                    <h1 className="text-4xl font-black tracking-tight">Welcome back, Learner.</h1>
+                    <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                        Welcome back, Learner.
+                    </h1>
                     <p className="text-gray-400 mt-2">Your AI tutor is ready for the next session.</p>
                 </div>
                 <div className="flex gap-4">
@@ -34,15 +37,16 @@ export default function Dashboard({ stats, progress, onStartQuiz }) {
             <div className="bento-grid">
                 {/* Pace Status */}
                 <motion.div 
-                    whileHover={{ scale: 1.02 }}
-                    className="glass-card md:col-span-2 flex items-center justify-between"
+                    whileHover={{ scale: 1.01 }}
+                    className="glass-card md:col-span-2 flex items-center justify-between overflow-hidden relative"
                 >
-                    <div className="space-y-2">
+                    <div className="space-y-2 z-10">
                         <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Current Pace</span>
-                        <h3 className={`text-2xl font-bold ${config.color}`}>{config.label}</h3>
-                        <p className="text-sm text-gray-400">Pace Score: {stats.pace_score.toFixed(1)}</p>
+                        <h3 className={`text-4xl font-black ${config.color}`}>{config.label}</h3>
+                        <p className="text-sm text-gray-400">Adaptive Multiplier: {stats.pace_score.toFixed(1)}x</p>
                     </div>
-                    <div className={`w-20 h-20 rounded-3xl ${config.bg} flex items-center justify-center text-5xl animate-float`}>
+                    <div className={`w-32 h-32 rounded-full absolute -right-6 -bottom-6 ${config.bg} blur-3xl opacity-50`} />
+                    <div className={`w-20 h-20 rounded-3xl ${config.bg} flex items-center justify-center text-5xl animate-float z-10`}>
                         {currentPace}
                     </div>
                 </motion.div>
@@ -51,7 +55,7 @@ export default function Dashboard({ stats, progress, onStartQuiz }) {
                 <motion.div whileHover={{ scale: 1.02 }} className="glass-card flex flex-col justify-between">
                     <div className="flex justify-between items-start">
                         <Trophy className="text-yellow-500" />
-                        <span className="text-xs font-bold text-gray-500">+12% today</span>
+                        <span className="text-xs font-bold text-gray-500">XP Progress</span>
                     </div>
                     <div className="mt-4">
                         <h3 className="text-3xl font-black">{stats.xp}</h3>
@@ -59,27 +63,41 @@ export default function Dashboard({ stats, progress, onStartQuiz }) {
                     </div>
                 </motion.div>
 
+                {/* Badges */}
+                <motion.div whileHover={{ scale: 1.02 }} className="glass-card flex flex-col gap-4">
+                    <h3 className="font-bold flex items-center gap-2 text-sm text-gray-400">
+                        <Award size={16} /> ACHIEVEMENTS
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                        {stats.badges.map(badge => (
+                            <span key={badge} className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold border border-purple-500/30">
+                                {badge}
+                            </span>
+                        ))}
+                        {stats.badges.length === 0 && <span className="text-xs text-gray-600 italic">No badges earned yet.</span>}
+                    </div>
+                </motion.div>
+
                 {/* Progress Overview */}
-                <motion.div whileHover={{ scale: 1.02 }} className="glass-card md:col-span-2">
+                <motion.div whileHover={{ scale: 1.02 }} className="glass-card md:col-span-1">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="font-bold flex items-center gap-2">
                             <Target size={18} className="text-purple-400" />
-                            Learning Progress
+                            Curriculum
                         </h3>
-                        <BarChart3 size={18} className="text-gray-500" />
                     </div>
                     <div className="space-y-4">
-                        {progress.map((topic, i) => (
+                        {progress.map((topic) => (
                             <div key={topic.topic_id} className="space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-300">{topic.topic_name}</span>
-                                    <span className="text-purple-400">{topic.avg_score}%</span>
+                                <div className="flex justify-between text-xs">
+                                    <span className="text-gray-400">{topic.topic_name}</span>
+                                    <span className="text-purple-400 font-mono">{topic.avg_score}%</span>
                                 </div>
-                                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                                     <motion.div 
                                         initial={{ width: 0 }}
-                                        animate={{ width: `${topic.avg_score}%` }}
-                                        className="h-full bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]"
+                                        whileInView={{ width: `${topic.avg_score}%` }}
+                                        className="h-full bg-purple-500"
                                     />
                                 </div>
                             </div>
@@ -87,18 +105,18 @@ export default function Dashboard({ stats, progress, onStartQuiz }) {
                     </div>
                 </motion.div>
 
+                <Leaderboard />
+
                 {/* Quick Action */}
                 <motion.div 
                     whileHover={{ scale: 1.02 }}
-                    className="glass-card bg-purple-600 hover:bg-purple-500 cursor-pointer group"
+                    className="glass-card bg-purple-600 hover:bg-purple-500 cursor-pointer group flex flex-col justify-between"
                     onClick={onStartQuiz}
                 >
-                    <div className="h-full flex flex-col justify-between text-white">
-                        <Zap className="group-hover:fill-current transition-all" />
-                        <div>
-                            <h3 className="text-xl font-bold">Start Challenge</h3>
-                            <p className="text-purple-200 text-sm">Boost your pace score now</p>
-                        </div>
+                    <Zap className="group-hover:fill-current transition-all text-white" />
+                    <div>
+                        <h3 className="text-xl font-bold text-white">Start Challenge</h3>
+                        <p className="text-purple-200 text-sm">Boost your pace score now</p>
                     </div>
                 </motion.div>
             </div>

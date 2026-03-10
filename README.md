@@ -1,16 +1,34 @@
-# React + Vite
+# Pulse Learn: Adaptive AI Tutor
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Pulse Learn is a premium AI-powered tutoring platform that dynamically adjusts its teaching style based on user performance.
 
-Currently, two official plugins are available:
+## Core Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Adaptive AI Tutor**: Powered by Gemini 1.5 Flash. The tutor's tone and complexity shift based on your `pace_score`.
+- **Bento Grid Dashboard**: High-end UI featuring real-time stats, progress tracking, and leaderboard.
+- **Voice Integration**: Hands-free learning with Voice-to-Text (Speech Recognition) and Text-to-Speech (TTS).
+- **Gamification**: Earn XP, level up, and unlock badges (Novice, Expert, Master) as you learn.
+- **Cloud Persistence**: Full data sync using Appwrite Database.
 
-## React Compiler
+## Adaptive Difficulty Logic
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The platform calculates your "Pace Score" using the following mathematical model:
 
-## Expanding the ESLint configuration
+```javascript
+NewPace = CurrentPace + Adjustment
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Adjustment Rules:
+- **Quiz Score > 80%**: `+0.1` (Increases complexity)
+- **Quiz Score < 50%**: `-0.1` (Decreases complexity)
+- **Score 50% - 80%**: `0.0` (Maintains current level)
+
+### AI Tone Mapping:
+- **Steady (🌿 < 0.8)**: Uses 5-year-old analogies and basic concepts.
+- **Balanced (📖 0.8 - 1.2)**: Standard educational tone with clear steps.
+- **Rapid (⚡ > 1.2)**: Technical deep-dives and academic depth.
+
+## Technology Stack
+- **Frontend**: React (Vite), Tailwind CSS v4, Framer Motion, Lucide React, Sonner.
+- **Backend**: Appwrite (TablesDB).
+- **AI**: Google Gemini AI.

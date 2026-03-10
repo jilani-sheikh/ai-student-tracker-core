@@ -13,6 +13,18 @@ client
 export const databases = new Databases(client);
 export const account = new Account(client);
 
+// Initialize anonymous session to fix 401 errors
+export const initAppwrite = async () => {
+    try {
+        const session = await account.getSession('current');
+        return session;
+    } catch {
+        return await account.createAnonymousSession();
+    }
+};
+
+initAppwrite().catch(console.error);
+
 // Table IDs from environment variables
 export const TABLES = {
     USER_STATS: import.meta.env.VITE_APPWRITE_STATS_COLLECTION_ID,
